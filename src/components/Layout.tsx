@@ -6,10 +6,13 @@ import {
   DollarSign, 
   Rss, 
   BookOpen,
-  Menu
+  Menu,
+  Keyboard
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useHotkeys } from "@/hooks/useHotkeys";
+import HotkeyHelp from "./HotkeyHelp";
 
 const navItems = [
   { title: "Задачи", url: "/tasks", icon: CheckSquare },
@@ -22,9 +25,13 @@ const navItems = [
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [helpOpen, setHelpOpen] = useState(false);
+  
+  useHotkeys(() => setHelpOpen(true));
 
   return (
     <div className="min-h-screen flex w-full bg-background">
+      <HotkeyHelp open={helpOpen} onOpenChange={setHelpOpen} />
       {/* Sidebar */}
       <aside
         className={`${
@@ -44,7 +51,7 @@ const Layout = () => {
         </div>
 
         <nav className="flex-1 p-2">
-          {navItems.map((item) => (
+          {navItems.map((item, index) => (
             <NavLink
               key={item.url}
               to={item.url}
@@ -57,10 +64,33 @@ const Layout = () => {
               }
             >
               <item.icon className="h-5 w-5 flex-shrink-0" />
-              {sidebarOpen && <span className="text-sm">{item.title}</span>}
+              {sidebarOpen && (
+                <span className="text-sm flex-1">{item.title}</span>
+              )}
+              {sidebarOpen && (
+                <kbd className="text-xs text-muted-foreground opacity-50">
+                  {index + 1}
+                </kbd>
+              )}
             </NavLink>
           ))}
         </nav>
+
+        <div className="p-2 border-t border-border">
+          <Button
+            variant="ghost"
+            onClick={() => setHelpOpen(true)}
+            className="w-full justify-start hover:bg-sidebar-accent/50"
+          >
+            <Keyboard className="h-5 w-5 flex-shrink-0" />
+            {sidebarOpen && <span className="text-sm">Горячие клавиши</span>}
+            {sidebarOpen && (
+              <kbd className="ml-auto text-xs text-muted-foreground opacity-50">
+                ?
+              </kbd>
+            )}
+          </Button>
+        </div>
       </aside>
 
       {/* Main content */}
