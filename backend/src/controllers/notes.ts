@@ -94,11 +94,18 @@ export const createNote = async (req: AuthRequest, res: Response) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      console.log('Validation errors:', errors.array());
+      return res.status(400).json({ 
+        error: 'Ошибка валидации',
+        details: errors.array() 
+      });
     }
 
     const userId = req.userId!;
     const { title, content, privacy = 'PRIVATE', sharedWith = [] } = req.body;
+    
+    // Log the incoming data for debugging
+    console.log('Creating note with data:', { title, content, privacy, sharedWith });
 
     const note = await db.note.create({
       data: {
@@ -155,7 +162,11 @@ export const updateNote = async (req: AuthRequest, res: Response) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      console.log('Validation errors:', errors.array());
+      return res.status(400).json({ 
+        error: 'Ошибка валидации',
+        details: errors.array() 
+      });
     }
 
     const userId = req.userId!;

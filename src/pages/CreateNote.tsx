@@ -27,8 +27,15 @@ const CreateNote = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate title and content
     if (!title.trim()) {
       toast.error("Введите название заметки");
+      return;
+    }
+    
+    if (!content.trim()) {
+      toast.error("Введите содержание заметки");
       return;
     }
     
@@ -51,9 +58,11 @@ const CreateNote = () => {
       
       toast.success("Заметка создана");
       navigate("/notes");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Create note error:", error);
-      toast.error("Ошибка при создании заметки");
+      // Show specific error message from backend if available
+      const errorMessage = error.message || "Ошибка при создании заметки";
+      toast.error(errorMessage);
     }
   };
 
@@ -91,7 +100,7 @@ const CreateNote = () => {
 
             <div>
               <Label htmlFor="content" className="text-sm mb-2 block">
-                Содержание
+                Содержание *
               </Label>
               <Textarea
                 id="content"
@@ -154,13 +163,13 @@ const CreateNote = () => {
                   }`} />
                   <div className="flex-1">
                     <p className="font-medium">Для определенных людей</p>
-                    <p className="text-sm text-muted-foreground mb-3">Выберите пользователей по username</p>
+                    <p className="text-sm text-muted-foreground mb-3">Выберите пользователей по email</p>
                     {privacy === "specific" && (
                       <Input
                         value={sharedWith}
                         onChange={(e) => setSharedWith(e.target.value)}
                         className="bg-transparent border-b border-t-0 border-x-0 rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary"
-                        placeholder="username1, username2, username3"
+                        placeholder="email1@example.com, email2@example.com"
                         onClick={(e) => e.stopPropagation()}
                       />
                     )}
