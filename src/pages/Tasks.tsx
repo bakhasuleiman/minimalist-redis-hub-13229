@@ -1,27 +1,85 @@
 import { Link } from "react-router-dom";
-import { Plus, CheckCircle2, Circle } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { tasksApi } from "@/lib/api";
+import { toast } from "sonner";
+import { TaskItem } from "@/components/TaskItem";
 
 interface Task {
   id: string;
   title: string;
+  description?: string;
   completed: boolean;
-  createdAt: Date;
+  privacy: string;
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    username?: string;
+  };
 }
 
 const Tasks = () => {
-  const [tasks, setTasks] = useState<Task[]>([
-    { id: "1", title: "Создать дизайн-систему", completed: true, createdAt: new Date() },
-    { id: "2", title: "Реализовать аутентификацию", completed: false, createdAt: new Date() },
-    { id: "3", title: "Добавить базу данных", completed: false, createdAt: new Date() },
-  ]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const toggleTask = (id: string) => {
-    setTasks(tasks.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
+  useEffect(() => {
+    loadTasks();
+  }, []);
+
+  const loadTasks = async () => {
+    try {
+      const response = await tasksApi.getAll();
+      setTasks(response.tasks);
+    } catch (error) {
+      console.error('Error loading tasks:', error);
+      toast.error('Ошибка при загрузке задач');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const toggleTask = async (id: string) => {
+    try {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+      
+      const updatedTask = await tasksApi.update(id, {
+        completed: !task.completed
+      });
+      
+      setTasks(tasks.map(t => 
+        t.id === id ? { ...t, completed: !t.completed } : t
+      ));
+      
+      toast.success(updatedTask.task.completed ? 'Задача выполнена' : 'Задача отмечена как невыполненная');
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast.error('Ошибка при обновлении задачи');
+    }
+  };
+
+  const handleTaskUpdate = (updatedTask: Task) => {
+    setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
+  };
+
+  const handleTaskDelete = (taskId: string) => {
+    setTasks(tasks.filter(t => t.id !== taskId));
+  };
+
+  if (loading) {
+    return (
+      <div className="p-8">
+        <div className="max-w-4xl mx-auto">
+          <p>Загрузка задач...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
@@ -41,22 +99,14 @@ const Tasks = () => {
           </Link>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1">
           {tasks.map((task) => (
-            <div
+            <TaskItem
               key={task.id}
-              onClick={() => toggleTask(task.id)}
-              className="flex items-center gap-3 p-4 hover:bg-muted/30 cursor-pointer transition-colors group"
-            >
-              {task.completed ? (
-                <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-              ) : (
-                <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0 group-hover:text-primary transition-colors" />
-              )}
-              <span className={task.completed ? "line-through text-muted-foreground" : ""}>
-                {task.title}
-              </span>
-            </div>
+              task={task}
+              onTaskUpdate={handleTaskUpdate}
+              onTaskDelete={handleTaskDelete}
+            />
           ))}
         </div>
       </div>

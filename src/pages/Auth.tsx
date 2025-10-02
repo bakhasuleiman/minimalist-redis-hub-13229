@@ -1,18 +1,29 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const { login, register, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = (location.state as any)?.from?.pathname || "/tasks";
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, location]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password || (!isLogin && !name)) {
@@ -20,9 +31,20 @@ const Auth = () => {
       return;
     }
 
-    // Mock auth - в реальном приложении здесь будет Lovable Cloud
-    toast.success(isLogin ? "Вход выполнен" : "Регистрация успешна");
-    navigate("/tasks");
+    try {
+      if (isLogin) {
+        await login(email, password);
+        toast.success("Вход выполнен");
+      } else {
+        await register(name, email, password);
+        toast.success("Регистрация успешна");
+      }
+      
+      // Navigation will be handled by the useEffect above
+    } catch (error) {
+      console.error('Auth error:', error);
+      toast.error(error instanceof Error ? error.message : "Ошибка аутентификации");
+    }
   };
 
   return (

@@ -6,12 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
+import { tasksApi } from "@/lib/api";
 
 const CreateTask = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [privacy, setPrivacy] = useState<"private" | "public" | "specific">("private");
   const [sharedWith, setSharedWith] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,14 +26,29 @@ const CreateTask = () => {
     return () => window.removeEventListener("keydown", handleEsc);
   }, [navigate]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
       toast.error("Введите название задачи");
       return;
     }
-    toast.success("Задача создана");
-    navigate("/tasks");
+    
+    setLoading(true);
+    try {
+      await tasksApi.create({
+        title: title.trim(),
+        description: description.trim() || undefined,
+        privacy: privacy.toUpperCase(),
+        sharedWith: privacy === "specific" ? sharedWith.split(',').map(s => s.trim()).filter(Boolean) : undefined
+      });
+      toast.success("Задача создана");
+      navigate("/tasks");
+    } catch (error: any) {
+      console.error('Error creating task:', error);
+      toast.error(error.message || "Ошибка при создании задачи");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -150,9 +167,10 @@ const CreateTask = () => {
           <div className="flex gap-4 pt-4">
             <Button
               type="submit"
-              className="bg-transparent border-0 text-primary hover:opacity-70 transition-opacity"
+              disabled={loading}
+              className="bg-transparent border-0 text-primary hover:opacity-70 transition-opacity disabled:opacity-50"
             >
-              Создать →
+              {loading ? "Создание..." : "Создать →"}
             </Button>
             <Button
               type="button"

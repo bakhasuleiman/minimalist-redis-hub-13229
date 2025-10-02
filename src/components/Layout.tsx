@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { 
   CheckSquare, 
   FileText, 
@@ -7,12 +7,16 @@ import {
   Rss, 
   BookOpen,
   Menu,
-  Keyboard
+  Keyboard,
+  LogOut
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useHotkeys } from "@/hooks/useHotkeys";
 import HotkeyHelp from "./HotkeyHelp";
+import FeedbackButton from "./FeedbackButton";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const navItems = [
   { title: "Задачи", url: "/tasks", icon: CheckSquare },
@@ -26,8 +30,16 @@ const navItems = [
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
   
   useHotkeys(() => setHelpOpen(true));
+
+  const handleLogout = () => {
+    logout();
+    toast.success("Вы вышли из системы");
+    navigate("/auth");
+  };
 
   return (
     <div className="min-h-screen flex w-full bg-background">
@@ -39,7 +51,12 @@ const Layout = () => {
         } bg-sidebar border-r border-border transition-all duration-200 flex flex-col`}
       >
         <div className="p-4 border-b border-border flex items-center justify-between">
-          {sidebarOpen && <h1 className="text-lg font-bold">Hub</h1>}
+          {sidebarOpen && (
+            <div>
+              <h1 className="text-lg font-bold">Hub</h1>
+              {user && <p className="text-xs text-muted-foreground">{user.username}</p>}
+            </div>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -76,7 +93,7 @@ const Layout = () => {
           ))}
         </nav>
 
-        <div className="p-2 border-t border-border">
+        <div className="p-2 border-t border-border space-y-1">
           <Button
             variant="ghost"
             onClick={() => setHelpOpen(true)}
@@ -90,12 +107,22 @@ const Layout = () => {
               </kbd>
             )}
           </Button>
+          
+          <Button
+            variant="ghost"
+            onClick={handleLogout}
+            className="w-full justify-start hover:bg-sidebar-accent/50 text-muted-foreground hover:text-foreground"
+          >
+            <LogOut className="h-5 w-5 flex-shrink-0" />
+            {sidebarOpen && <span className="text-sm">Выйти</span>}
+          </Button>
         </div>
       </aside>
 
       {/* Main content */}
       <main className="flex-1 overflow-auto">
         <Outlet />
+        <FeedbackButton />
       </main>
     </div>
   );

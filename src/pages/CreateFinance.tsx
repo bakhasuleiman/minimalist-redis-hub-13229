@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
+import { financeApi } from "@/lib/api";
 
 const CreateFinance = () => {
   const [title, setTitle] = useState("");
@@ -12,6 +13,8 @@ const CreateFinance = () => {
   const [type, setType] = useState<"income" | "expense">("expense");
   const [privacy, setPrivacy] = useState<"private" | "public" | "specific">("private");
   const [sharedWith, setSharedWith] = useState("");
+  const [currency, setCurrency] = useState("RUB");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,14 +27,31 @@ const CreateFinance = () => {
     return () => window.removeEventListener("keydown", handleEsc);
   }, [navigate]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !amount) {
       toast.error("Заполните все поля");
       return;
     }
-    toast.success("Транзакция добавлена");
-    navigate("/finance");
+    
+    setLoading(true);
+    try {
+      await financeApi.create({
+        title: title.trim(),
+        amount: parseFloat(amount),
+        type: type.toUpperCase(),
+        currency,
+        privacy: privacy.toUpperCase(),
+        sharedWith: privacy === "specific" ? sharedWith.split(',').map(s => s.trim()).filter(Boolean) : undefined
+      });
+      toast.success("Транзакция добавлена");
+      navigate("/finance");
+    } catch (error: any) {
+      console.error('Error creating transaction:', error);
+      toast.error(error.message || "Ошибка при создании транзакции");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -100,14 +120,26 @@ const CreateFinance = () => {
               <Label htmlFor="amount" className="text-sm mb-2 block">
                 Сумма *
               </Label>
-              <Input
-                id="amount"
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="bg-transparent border-b border-t-0 border-x-0 rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary"
-                placeholder="0"
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="amount"
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="bg-transparent border-b border-t-0 border-x-0 rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary flex-1"
+                  placeholder="0"
+                />
+                <select
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  className="bg-transparent border-b border-t-0 border-x-0 rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary text-sm w-20"
+                >
+                  <option value="RUB">₽</option>
+                  <option value="USD">$</option>
+                  <option value="EUR">€</option>
+                  <option value="CNY">¥</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -181,9 +213,10 @@ const CreateFinance = () => {
           <div className="flex gap-4 pt-4">
             <Button
               type="submit"
-              className="bg-transparent border-0 text-primary hover:opacity-70 transition-opacity"
+              disabled={loading}
+              className="bg-transparent border-0 text-primary hover:opacity-70 transition-opacity disabled:opacity-50"
             >
-              Добавить →
+              {loading ? "Добавление..." : "Добавить →"}
             </Button>
             <Button
               type="button"

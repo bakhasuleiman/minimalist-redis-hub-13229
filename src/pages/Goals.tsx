@@ -1,20 +1,66 @@
 import { Link } from "react-router-dom";
-import { Plus, Target } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { goalsApi } from "@/lib/api";
+import { toast } from "sonner";
+import { GoalItem } from "@/components/GoalItem";
 
 interface Goal {
   id: string;
   title: string;
+  description?: string;
   progress: number;
-  deadline: Date;
+  deadline?: string;
+  privacy: string;
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    username?: string;
+  };
 }
 
 const Goals = () => {
-  const goals: Goal[] = [
-    { id: "1", title: "Запустить MVP продукта", progress: 60, deadline: new Date("2025-11-01") },
-    { id: "2", title: "Изучить TypeScript", progress: 80, deadline: new Date("2025-10-15") },
-    { id: "3", title: "Читать по 30 минут в день", progress: 40, deadline: new Date("2025-12-31") },
-  ];
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadGoals();
+  }, []);
+
+  const loadGoals = async () => {
+    try {
+      const response = await goalsApi.getAll();
+      setGoals(response.goals);
+    } catch (error) {
+      console.error('Error loading goals:', error);
+      toast.error('Ошибка при загрузке целей');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-8">
+        <div className="max-w-4xl mx-auto">
+          <p>Загрузка целей...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleGoalUpdate = (updatedGoal: Goal) => {
+    setGoals(goals.map(g => g.id === updatedGoal.id ? updatedGoal : g));
+  };
+
+  const handleGoalDelete = (goalId: string) => {
+    setGoals(goals.filter(g => g.id !== goalId));
+  };
 
   return (
     <div className="p-8">
@@ -32,33 +78,14 @@ const Goals = () => {
           </Link>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-1">
           {goals.map((goal) => (
-            <div
+            <GoalItem
               key={goal.id}
-              className="p-6 hover:bg-muted/30 cursor-pointer transition-colors group"
-            >
-              <div className="flex items-start gap-3 mb-3">
-                <Target className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1 group-hover:text-primary transition-colors" />
-                <div className="flex-1">
-                  <h3 className="font-semibold mb-1">{goal.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    До {goal.deadline.toLocaleDateString('ru-RU')}
-                  </p>
-                </div>
-              </div>
-              <div className="ml-8">
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary transition-all duration-300"
-                      style={{ width: `${goal.progress}%` }}
-                    />
-                  </div>
-                  <span className="text-sm text-muted-foreground">{goal.progress}%</span>
-                </div>
-              </div>
-            </div>
+              goal={goal}
+              onGoalUpdate={handleGoalUpdate}
+              onGoalDelete={handleGoalDelete}
+            />
           ))}
         </div>
       </div>
