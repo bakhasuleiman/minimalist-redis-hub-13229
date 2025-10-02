@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
+import { articlesApi } from "@/lib/api";
 
 const CreateArticle = () => {
   const [title, setTitle] = useState("");
@@ -24,14 +25,37 @@ const CreateArticle = () => {
     return () => window.removeEventListener("keydown", handleEsc);
   }, [navigate]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) {
       toast.error("Заполните все поля");
       return;
     }
-    toast.success("Статья опубликована");
-    navigate("/articles");
+    
+    try {
+      const privacyMap = {
+        private: "PRIVATE",
+        public: "PUBLIC",
+        specific: "SPECIFIC"
+      };
+      
+      const sharedWithEmails = privacy === "specific" ? 
+        sharedWith.split(",").map(email => email.trim()).filter(email => email) : [];
+      
+      await articlesApi.create({
+        title: title.trim(),
+        content: content.trim(),
+        published: privacyMap[privacy] === "PUBLIC",
+        privacy: privacyMap[privacy],
+        sharedWith: sharedWithEmails
+      });
+      
+      toast.success("Статья опубликована");
+      navigate("/articles");
+    } catch (error) {
+      console.error("Create article error:", error);
+      toast.error("Ошибка при создании статьи");
+    }
   };
 
   return (

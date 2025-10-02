@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
+import { goalsApi } from "@/lib/api";
 
 const CreateGoal = () => {
   const [title, setTitle] = useState("");
@@ -27,14 +28,37 @@ const CreateGoal = () => {
     return () => window.removeEventListener("keydown", handleEsc);
   }, [navigate]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
       toast.error("Введите название цели");
       return;
     }
-    toast.success("Цель создана");
-    navigate("/goals");
+    
+    try {
+      const privacyMap = {
+        private: "PRIVATE",
+        public: "PUBLIC",
+        specific: "SPECIFIC"
+      };
+      
+      const sharedWithEmails = privacy === "specific" ? 
+        sharedWith.split(",").map(email => email.trim()).filter(email => email) : [];
+      
+      await goalsApi.create({
+        title: title.trim(),
+        description: description.trim(),
+        deadline: deadline || null,
+        privacy: privacyMap[privacy],
+        sharedWith: sharedWithEmails
+      });
+      
+      toast.success("Цель создана");
+      navigate("/goals");
+    } catch (error) {
+      console.error("Create goal error:", error);
+      toast.error("Ошибка при создании цели");
+    }
   };
 
   return (

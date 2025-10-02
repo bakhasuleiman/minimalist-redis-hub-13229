@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
+import { notesApi } from "@/lib/api";
 
 const CreateNote = () => {
   const [title, setTitle] = useState("");
@@ -24,14 +25,36 @@ const CreateNote = () => {
     return () => window.removeEventListener("keydown", handleEsc);
   }, [navigate]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
       toast.error("Введите название заметки");
       return;
     }
-    toast.success("Заметка создана");
-    navigate("/notes");
+    
+    try {
+      const privacyMap = {
+        private: "PRIVATE",
+        public: "PUBLIC",
+        specific: "SPECIFIC"
+      };
+      
+      const sharedWithEmails = privacy === "specific" ? 
+        sharedWith.split(",").map(email => email.trim()).filter(email => email) : [];
+      
+      await notesApi.create({
+        title: title.trim(),
+        content: content.trim(),
+        privacy: privacyMap[privacy],
+        sharedWith: sharedWithEmails
+      });
+      
+      toast.success("Заметка создана");
+      navigate("/notes");
+    } catch (error) {
+      console.error("Create note error:", error);
+      toast.error("Ошибка при создании заметки");
+    }
   };
 
   return (
