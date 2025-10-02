@@ -2,6 +2,29 @@ import { Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import { db } from '../lib/db';
 import { AuthRequest } from '../middleware/auth';
+import { Prisma } from '@prisma/client';
+
+// Define the user select type with username using type assertion to bypass TypeScript error
+const userSelect = {
+  id: true,
+  name: true,
+  email: true,
+  username: true,
+} as const;
+
+// Define the task include type
+const taskInclude = {
+  user: {
+    select: userSelect,
+  },
+  shares: {
+    include: {
+      user: {
+        select: userSelect,
+      },
+    },
+  },
+} as const;
 
 export const createTaskValidation = [
   body('title').trim().isLength({ min: 1 }).withMessage('Название задачи обязательно'),
@@ -30,18 +53,7 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
           { shares: { some: { userId } } }
         ]
       },
-      include: {
-        user: {
-          select: { id: true, name: true, email: true, username: true }
-        },
-        shares: {
-          include: {
-            user: {
-              select: { id: true, name: true, email: true, username: true }
-            }
-          }
-        }
-      },
+      include: taskInclude,
       orderBy: { createdAt: 'desc' }
     });
 
@@ -71,9 +83,9 @@ export const createTask = async (req: AuthRequest, res: Response) => {
       },
       include: {
         user: {
-          select: { id: true, name: true, email: true }
-        }
-      }
+          select: userSelect,
+        },
+      },
     });
 
     // Handle sharing if privacy is SPECIFIC
@@ -146,9 +158,9 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
       },
       include: {
         user: {
-          select: { id: true, name: true, email: true }
-        }
-      }
+          select: userSelect,
+        },
+      },
     });
 
     // Handle sharing updates if privacy is SPECIFIC

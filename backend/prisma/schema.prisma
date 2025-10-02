@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,30 +8,26 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  username  String   @unique
-  name      String
-  password  String
-  role      String   @default("USER")
-  isHidden  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  tasks        Task[]
-  notes        Note[]
-  goals        Goal[]
-  transactions Transaction[]
-  articles     Article[]
-  activities   Activity[]
-  feedbacks    Feedback[]
-
-  // Shared content relations
-  sharedTasks    TaskShare[]
-  sharedNotes    NoteShare[]
-  sharedGoals    GoalShare[]
+  id             String         @id @default(cuid())
+  email          String         @unique
+  username       String         @unique
+  name           String
+  password       String
+  role           String         @default("USER")
+  isHidden       Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  activities     Activity[]
   sharedArticles ArticleShare[]
+  articles       Article[]
+  feedbacks      Feedback[]
+  sharedGoals    GoalShare[]
+  goals          Goal[]
+  sharedNotes    NoteShare[]
+  notes          Note[]
+  sharedTasks    TaskShare[]
+  tasks          Task[]
+  transactions   Transaction[]
 
   @@map("users")
 }
@@ -48,8 +41,8 @@ model Task {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   userId      String
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   shares      TaskShare[]
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("tasks")
 }
@@ -58,8 +51,8 @@ model TaskShare {
   id     String @id @default(cuid())
   taskId String
   userId String
-  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, userId])
   @@map("task_shares")
@@ -73,8 +66,8 @@ model Note {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   userId    String
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   shares    NoteShare[]
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notes")
 }
@@ -83,8 +76,8 @@ model NoteShare {
   id     String @id @default(cuid())
   noteId String
   userId String
-  note   Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note   Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
 
   @@unique([noteId, userId])
   @@map("note_shares")
@@ -100,8 +93,8 @@ model Goal {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   userId      String
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   shares      GoalShare[]
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("goals")
 }
@@ -110,39 +103,39 @@ model GoalShare {
   id     String @id @default(cuid())
   goalId String
   userId String
-  goal   Goal   @relation(fields: [goalId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal   Goal   @relation(fields: [goalId], references: [id], onDelete: Cascade)
 
   @@unique([goalId, userId])
   @@map("goal_shares")
 }
 
 model Transaction {
-  id        String            @id @default(cuid())
+  id        String   @id @default(cuid())
   title     String
   amount    Float
   type      String
-  currency  String            @default("RUB")
-  privacy   String            @default("PRIVATE")
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  currency  String   @default("RUB")
+  privacy   String   @default("PRIVATE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   userId    String
-  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("transactions")
 }
 
 model Article {
-  id           String         @id @default(cuid())
-  title        String
-  content      String
-  published    Boolean        @default(false)
-  privacy      String         @default("PRIVATE")
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  userId       String
-  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shares       ArticleShare[]
+  id        String         @id @default(cuid())
+  title     String
+  content   String
+  published Boolean        @default(false)
+  privacy   String         @default("PRIVATE")
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  userId    String
+  shares    ArticleShare[]
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("articles")
 }
@@ -151,37 +144,37 @@ model ArticleShare {
   id        String  @id @default(cuid())
   articleId String
   userId    String
-  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
 
   @@unique([articleId, userId])
   @@map("article_shares")
 }
 
 model Activity {
-  id        String       @id @default(cuid())
+  id        String   @id @default(cuid())
   action    String
   details   String
   type      String
-  createdAt DateTime     @default(now())
+  createdAt DateTime @default(now())
   userId    String
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("activities")
 }
 
 model Feedback {
-  id          String   @id @default(cuid())
-  type        String   // "FEEDBACK" or "BUG"
-  title       String
-  message     String
-  email       String?
-  status      String   @default("OPEN")
-  adminReply  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id         String   @id @default(cuid())
+  type       String
+  title      String
+  message    String
+  email      String?
+  status     String   @default("OPEN")
+  adminReply String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
 
   @@map("feedbacks")
 }
@@ -195,10 +188,3 @@ model SiteSettings {
 
   @@map("site_settings")
 }
-
-// Privacy options: PRIVATE, PUBLIC, SPECIFIC
-// TransactionType options: INCOME, EXPENSE  
-// ActivityType options: TASK, NOTE, GOAL, TRANSACTION, ARTICLE, USER
-// UserRole options: USER, ADMIN
-// FeedbackType options: FEEDBACK, BUG
-// FeedbackStatus options: OPEN, IN_PROGRESS, RESOLVED, CLOSED
